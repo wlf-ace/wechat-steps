@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信刷步数工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 100%;
+            margin: 0;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #07C160;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #06AD56;
+        }
+        #result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .success {
+            background: #E1F3D8;
+            color: #67C23A;
+        }
+        .error {
+            background: #FDE2E2;
+            color: #F56C6C;
+        }
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .remember-me input {
+            width: auto;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>微信刷步数工具</h1>
+        <div class="form-group">
+            <label for="user">Zepp Life 账号</label>
+            <input type="text" id="user" placeholder="输入邮箱/手机号">
+        </div>
+        <div class="form-group">
+            <label for="pass">Zepp Life 密码</label>
+            <input type="password" id="pass" placeholder="输入密码">
+        </div>
+        <div class="remember-me">
+            <input type="checkbox" id="remember">
+            <label for="remember">记住账号密码</label>
+        </div>
+        <div class="form-group">
+            <label for="count">步数</label>
+            <input type="number" id="count" placeholder="输入步数（如 10000）" value="10000">
+        </div>
+        <button onclick="submitSteps()">提交步数</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // 页面加载时检查本地存储
+        document.addEventListener('DOMContentLoaded', function() {
+            const remember = localStorage.getItem('remember') === 'true';
+            if (remember) {
+                document.getElementById('user').value = localStorage.getItem('user') || '';
+                document.getElementById('pass').value = localStorage.getItem('pass') || '';
+                document.getElementById('remember').checked = true;
+            }
+            
+            // 设置随机步数（8000-15000）
+            document.getElementById('count').value = Math.floor(8000 + Math.random() * 7000);
+        });
+
+        async function submitSteps() {
+            const user = document.getElementById("user").value;
+            const pass = document.getElementById("pass").value;
+            const count = document.getElementById("count").value;
+            const remember = document.getElementById("remember").checked;
+
+            if (!user || !pass || !count) {
+                showResult("请填写完整信息！", "error");
+                return;
+            }
+
+            // 存储账号密码
+            if (remember) {
+                localStorage.setItem('user', user);
+                localStorage.setItem('pass', pass);
+                localStorage.setItem('remember', 'true');
+            } else {
+                localStorage.removeItem('user');
+                localStorage.removeItem('pass');
+                localStorage.removeItem('remember');
+            }
+
+            showResult("提交中...", "");
+
+            try {
+                // 调用Vercel Serverless代理
+                const response = await fetch(`/api/proxy?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}&count=${count}`);
+                
+                if (!response.ok) throw new Error(await response.text());
+                
+                const data = await response.text();
+                showResult("提交成功！王荣弟弟荣誉出品！" + data, "success");
+            } catch (error) {
+                showResult("提交失败: " + error.message, "error");
+            }
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById("result");
+            resultDiv.textContent = message;
+            resultDiv.className = type;
+        }
+    </script>
+</body>
+</html>
